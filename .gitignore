@@ -1,0 +1,11 @@
+node_modules/
+dist/
+api/dist/
+.local/
+.env*
+!.env.example
+api/local.settings.json
+output/
+.playwright-cli/
+.azure-deploy.json
+*.log

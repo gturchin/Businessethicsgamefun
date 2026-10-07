@@ -1,0 +1,23 @@
+import { useState } from 'react';
+import { Link, Route, Routes, useNavigate } from 'react-router-dom';
+import { ArrowUpRight, Play, Users } from 'lucide-react';
+import { Brand, City } from './components';
+import { request } from './api';
+import Student from './Student';
+import Control from './Control';
+import Projector from './Projector';
+function Home({ demo = false }: { demo?: boolean }) {
+  const [code, setCode] = useState(''); const [error, setError] = useState(''); const [busy, setBusy] = useState(false); const navigate = useNavigate();
+  async function create(isDemo: boolean) {
+    setBusy(true); setError('');
+    try { const session = await request<{ code: string; hostToken: string }>('sessions', undefined, { demo: isDemo }); localStorage.setItem(`riverton.host.${session.code}`, session.hostToken); navigate(`/control/${session.code}`); }
+    catch { setError('The class service is unavailable. You can still rehearse with the offline presenter backup.'); } finally { setBusy(false); }
+  }
+  return <div className="home"><header className="home-header"><Brand/><Link className="quiet-link" to="/control">Presenter access <ArrowUpRight size={15}/></Link></header><main className="home-main"><div className="home-copy"><p className="eyebrow">An environmental justice simulation</p><h1>Rebuild<br/>Riverton<span className="title-dot">.</span></h1><p className="home-description">Can you rebuild an industrial community without repeating the mistakes of its past?</p><div className="home-actions">{demo ? <><button className="primary" disabled={busy} onClick={() => create(true)}><Play size={18}/>{busy ? 'Preparing your class…' : 'Run demo class'}</button><p>30 simulated residents. All five decisions. The full presentation.</p></> : <><form onSubmit={e => { e.preventDefault(); if (code.trim()) navigate(`/join/${code.trim().toUpperCase()}`); }}><label htmlFor="class-code">Your class code</label><div className="join-input"><input id="class-code" autoCapitalize="characters" autoComplete="off" maxLength={12} placeholder="RIVER27X" value={code} onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} required/><button className="primary" type="submit">Enter Riverton</button></div></form><Link className="quiet-link" to="/demo"><Play size={15}/> Explore with a demo class</Link></>}{error && <p className="error" role="alert">{error}</p>}{(demo || error) && <Link className="quiet-link" to="/offline">Open offline presenter backup</Link>}</div></div><div className="home-visual"><div className="district-number">R<span>42,000 people<br/>One shared future</span></div><City/><div className="stat-strip"><div><strong>180</strong><span>acres of industrial land</span></div><div><strong>70+</strong><span>years of manufacturing</span></div><div><strong>$41k</strong><span>median household income</span></div></div></div></main><footer className="home-footer"><span>Growth. Responsibility. Community.</span><span><Users size={14}/> A 5–10 minute classroom experience</span></footer></div>;
+}
+function PresenterStart() {
+  const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const navigate = useNavigate();
+  async function create() { setBusy(true); try { const s = await request<{ code: string; hostToken: string }>('sessions', undefined, {}); localStorage.setItem(`riverton.host.${s.code}`, s.hostToken); navigate(`/control/${s.code}`); } catch { setError('Cannot connect to the class service. Try again or open the offline backup.'); } finally { setBusy(false); } }
+  return <main className="start-page"><Brand/><p className="eyebrow">Presenter access</p><h1>Bring Riverton<br/>into the room.</h1><p>Create a class, open the projector in a second tab, and let your students shape what happens next.</p><button className="primary" disabled={busy} onClick={create}>{busy ? 'Creating session…' : 'Create class session'}</button><Link className="secondary" to="/demo">Run demo class</Link><Link className="quiet-link" to="/offline">Offline presenter backup</Link>{error && <p className="error" role="alert">{error}</p>}</main>;
+}
+export default function App() { return <Routes><Route path="/" element={<Home/>}/><Route path="/demo" element={<Home demo/>}/><Route path="/control" element={<PresenterStart/>}/><Route path="/control/:code" element={<Control/>}/><Route path="/join/:code" element={<Student/>}/><Route path="/live/:code" element={<Projector/>}/><Route path="/offline" element={<Control offline/>}/><Route path="*" element={<main className="start-page"><h1>This street ends here.</h1><Link className="primary" to="/">Return to Riverton</Link></main>}/></Routes>; }

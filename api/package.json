@@ -1,0 +1,8 @@
+{
+  "name": "riverton-api", "version": "1.0.0", "private": true,
+  "main": "dist/api/src/azure.js",
+  "scripts": { "build": "tsc -p tsconfig.json", "start": "func start" },
+  "engines": { "node": ">=22" },
+  "dependencies": { "@azure/functions": "^4.7.0", "@azure/data-tables": "^13.3.0" },
+  "devDependencies": { "@types/node": "^22.15.0", "typescript": "^5.8.0" }
+}

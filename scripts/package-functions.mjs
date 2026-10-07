@@ -1,0 +1,16 @@
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
+const folder = resolve('.local/function-package');
+await rm(folder, { recursive: true, force: true }); await mkdir(folder, { recursive: true });
+await cp('api/dist', `${folder}/dist`, { recursive: true });
+await cp('dist', `${folder}/static`, { recursive: true });
+await cp('api/package.json', `${folder}/package.json`); await cp('api/package-lock.json', `${folder}/package-lock.json`);
+const host = JSON.parse(await readFile('api/host.json', 'utf8')); host.extensions.http.routePrefix = '';
+await writeFile(`${folder}/host.json`, JSON.stringify(host));
+const install = spawnSync('npm', ['ci', '--omit=dev', '--prefix', folder], { stdio: 'inherit' });
+if (install.status !== 0) throw new Error('Function package dependencies could not be installed.');
+const archive = resolve('.local/function-package.zip'); await rm(archive, { force: true });
+const zip = spawnSync('zip', ['-q', '-r', archive, '.'], { cwd: folder, stdio: 'inherit' });
+if (zip.status !== 0) throw new Error('Function package could not be zipped.');
+console.log('Frontend and API packaged together.');

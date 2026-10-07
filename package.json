@@ -1,0 +1,34 @@
+{
+  "name": "rebuild-riverton",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:api": "tsx watch api/src/local.ts",
+    "build": "tsc --noEmit && vite build && node scripts/build-cache.mjs && npm --prefix api run build",
+    "test": "tsx --test api/test/*.test.ts",
+    "typecheck": "tsc --noEmit && npm --prefix api run build",
+    "preview": "vite preview --host 0.0.0.0",
+    "deploy": "node scripts/deploy.mjs",
+    "deploy:github": "node scripts/configure-github.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.4.0",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "vite": "^6.3.0"
+  }
+}
