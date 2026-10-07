@@ -1,5 +1,6 @@
 name: Deploy Riverton to Azure
-on: workflow_dispatch
+on:
+  workflow_dispatch:
 permissions:
   contents: read
   id-token: write
