@@ -43,6 +43,8 @@ npm run deploy:github
 
 This creates a user-assigned identity in the dedicated resource group, grants **Website Contributor** only on this Function App, and trusts GitHub OIDC tokens from the connected repository's current branch. It sets the identity identifiers as repository secrets and the app name as a repository variable. It does not enable SCM basic authentication or store a publishing password. See [Microsoft's Functions GitHub Actions documentation](https://learn.microsoft.com/en-us/azure/azure-functions/functions-how-to-github-actions).
 
+The script reads GitHub's actual subject prefix, including immutable owner/repository IDs for new repositories, before creating Azure trust. A custom OIDC subject template needs inspection first. See [GitHub's OIDC reference](https://docs.github.com/en/actions/reference/security/oidc).
+
 Commit and push the workflow before it is available on GitHub, then dispatch **Deploy Riverton to Azure** from the trusted branch. Local changes alone do not activate it. Code pushes run checks but do not publish automatically. If the deployment branch changes, rerun the configuration command on that branch. Direct deployment remains available through `npm run deploy`.
 
 Consumption hosting has no fixed hosting fee. Storage transactions, retained data, function execution, and subscription allowances affect cost. Cold starts are possible: open and rehearse the live session shortly before class. Cleanup is optional and destructive: delete only the dedicated resource group after deciding whether to retain the app and sessions.

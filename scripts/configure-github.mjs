@@ -22,16 +22,20 @@ try {
   const branch = call('git', ['branch', '--show-current']);
   if (!branch) throw new Error('Check out the branch that will deploy.');
   call('gh', ['auth', 'status']);
+  const claims = JSON.parse(call('gh', ['api', `repos/${repo}/actions/oidc/customization/sub`]));
+  if (!claims.use_default) throw new Error('This repository uses custom OIDC claims. Inspect its subject template before configuring Azure trust.');
+  // New repositories include immutable owner/repository IDs in this prefix.
+  const subject = `${claims.sub_claim_prefix ?? `repo:${repo}`}:ref:refs/heads/${branch}`;
   const identityName = `${config.app}-github`;
   az(['provider', 'register', '--namespace', 'Microsoft.ManagedIdentity', '--wait']);
   const identity = JSON.parse(az(['identity', 'create', '-n', identityName, '-g', config.resourceGroup, '-l', config.location, '-o', 'json']));
   const appId = az(['functionapp', 'show', '-n', config.app, '-g', config.resourceGroup, '--query', 'id', '-o', 'tsv']);
   const roles = JSON.parse(az(['role', 'assignment', 'list', '--assignee', identity.principalId, '--scope', appId, '--query', "[?roleDefinitionName=='Website Contributor']", '-o', 'json']));
   if (!roles.length) az(['role', 'assignment', 'create', '--assignee-object-id', identity.principalId, '--assignee-principal-type', 'ServicePrincipal', '--role', 'Website Contributor', '--scope', appId, '-o', 'none']);
-  az(['identity', 'federated-credential', 'create', '--identity-name', identityName, '-g', config.resourceGroup, '-n', 'github-branch', '--issuer', 'https://token.actions.githubusercontent.com', '--subject', `repo:${repo}:ref:refs/heads/${branch}`, '--audiences', 'api://AzureADTokenExchange', '-o', 'none']);
+  az(['identity', 'federated-credential', 'create', '--identity-name', identityName, '-g', config.resourceGroup, '-n', 'github-branch', '--issuer', 'https://token.actions.githubusercontent.com', '--subject', subject, '--audiences', 'api://AzureADTokenExchange', '-o', 'none']);
   for (const [name, value] of Object.entries({ AZURE_CLIENT_ID: identity.clientId, AZURE_TENANT_ID: identity.tenantId, AZURE_SUBSCRIPTION_ID: account.id })) call('gh', ['secret', 'set', name, '--repo', repo], value);
   call('gh', ['variable', 'set', 'AZURE_FUNCTIONAPP_NAME', '--repo', repo, '--body', config.app]);
-  config.github = { repo, branch, identity: identityName };
+  config.github = { repo, branch, identity: identityName, subject };
   await writeFile('.azure-deploy.json', JSON.stringify(config, null, 2));
   console.log(`GitHub OIDC configured for ${repo}, branch ${branch}. No publishing password is stored. Commit and push the workflow before dispatching it.`);
 } catch (error) { console.error(error.message); process.exitCode = 1; }
